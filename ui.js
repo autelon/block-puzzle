@@ -8,6 +8,7 @@ const boardEl = $('board');
 const trayEl = $('tray');
 const scoreEl = $('score');
 const overDialog = $('over-dialog');
+const pauseDialog = $('pause-dialog');
 
 let state = null;
 
@@ -28,16 +29,30 @@ function showScreen(screen) {
 }
 
 function startGame() {
+  cancelDrag();
   state = newGame();
-  overDialog.hidden = true;
+  closeDialogs();
   showScreen(playScreen);
   render();
 }
 
 function quitGame() {
+  cancelDrag();
   state = null;
-  overDialog.hidden = true;
+  closeDialogs();
   showScreen(startScreen);
+}
+
+function closeDialogs() {
+  overDialog.hidden = true;
+  pauseDialog.hidden = true;
+}
+
+// 일시 중지에서 재시작·종료하면 그 판은 끝나지 않은 채 버려진다(점수 기록 대상이 아님).
+function pause() {
+  if (!state || state.over) return;
+  cancelDrag();
+  pauseDialog.hidden = false;
 }
 
 function showOver() {
@@ -145,14 +160,22 @@ function moveDrag(e) {
   }
 }
 
+// 놓지 않고 끌기를 되돌린다. 끌던 손가락을 나중에 떼도 drag 가 없으니 무시된다.
+// 끄는 중에 다른 손가락으로 일시 중지·재시작·종료를 누를 때도 부른다.
+function cancelDrag() {
+  if (!drag) return null;
+  const ended = drag;
+  drag = null;
+  ended.ghost.remove();
+  ended.piece.classList.remove('dragging-source');
+  clearPreview();
+  return ended;
+}
+
 // drop 이 false 면(pointercancel) 놓지 않고 되돌리기만 한다.
 function endDrag(e, drop) {
   if (!drag || e.pointerId !== drag.pointerId) return;
-  const { index, target, ghost, piece } = drag;
-  drag = null;
-  ghost.remove();
-  piece.classList.remove('dragging-source');
-  clearPreview();
+  const { index, target } = cancelDrag();
   if (!drop || !target) return;
   const next = playPiece(state, index, target.row, target.col);
   if (next) {
@@ -167,5 +190,9 @@ window.addEventListener('pointerup', (e) => endDrag(e, true));
 window.addEventListener('pointercancel', (e) => endDrag(e, false));
 
 $('start-button').addEventListener('click', startGame);
+$('pause-button').addEventListener('click', pause);
+$('pause-resume').addEventListener('click', () => { pauseDialog.hidden = true; });
+$('pause-restart').addEventListener('click', startGame);
+$('pause-quit').addEventListener('click', quitGame);
 $('over-restart').addEventListener('click', startGame);
 $('over-quit').addEventListener('click', quitGame);
