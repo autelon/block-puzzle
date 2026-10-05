@@ -1,0 +1,151 @@
+// 화면 코드. 게임 규칙은 game.js 에 있고, 여기서는 상태를 그리고 입력을 game.js 함수로 넘긴다.
+import { SIZE, newGame, playPiece, canPlace } from './game.js';
+
+const $ = (id) => document.getElementById(id);
+const startScreen = $('start-screen');
+const playScreen = $('play-screen');
+const boardEl = $('board');
+const trayEl = $('tray');
+const scoreEl = $('score');
+
+let state = null;
+
+// 판 칸 SIZE×SIZE 개를 한 번 만든다.
+const cellEls = [];
+for (let r = 0; r < SIZE; r++) {
+  cellEls.push([]);
+  for (let c = 0; c < SIZE; c++) {
+    const el = document.createElement('div');
+    el.className = 'cell';
+    boardEl.appendChild(el);
+    cellEls[r].push(el);
+  }
+}
+
+function showScreen(screen) {
+  for (const s of [startScreen, playScreen]) s.hidden = s !== screen;
+}
+
+function startGame() {
+  state = newGame();
+  showScreen(playScreen);
+  render();
+}
+
+// 모양을 칸 격자로 만든다. 빈 자리는 blank 칸으로 채운다.
+function shapeEl(shape, className) {
+  const rows = Math.max(...shape.cells.map(([r]) => r)) + 1;
+  const cols = Math.max(...shape.cells.map(([, c]) => c)) + 1;
+  const el = document.createElement('div');
+  el.className = className;
+  el.style.gridTemplateColumns = `repeat(${cols}, auto)`;
+  const filled = new Set(shape.cells.map(([r, c]) => `${r},${c}`));
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      const cell = document.createElement('div');
+      cell.className = filled.has(`${r},${c}`) ? 'cell filled' : 'cell blank';
+      el.appendChild(cell);
+    }
+  }
+  return el;
+}
+
+function render() {
+  for (let r = 0; r < SIZE; r++) {
+    for (let c = 0; c < SIZE; c++) {
+      cellEls[r][c].className = state.board[r][c] ? 'cell filled' : 'cell';
+    }
+  }
+  scoreEl.textContent = state.score;
+
+  trayEl.replaceChildren();
+  state.pieces.forEach((shape, index) => {
+    const slot = document.createElement('div');
+    slot.className = 'slot';
+    if (shape) {
+      const piece = shapeEl(shape, 'piece');
+      piece.addEventListener('pointerdown', (e) => startDrag(e, index, piece));
+      slot.appendChild(piece);
+    }
+    trayEl.appendChild(slot);
+  });
+}
+
+// ---- 끌어 놓기 ----
+// 받침의 블록을 누르면 판 크기의 그림자가 손가락을 따라오고, 그림자의 왼쪽 위 칸이 놓일 자리다.
+
+let drag = null;
+
+function pitch(a, b) {
+  return b.getBoundingClientRect().left - a.getBoundingClientRect().left;
+}
+
+function startDrag(e, index, piece) {
+  if (!state || state.over || drag) return;
+  e.preventDefault();
+  const shape = state.pieces[index];
+  const pieceRect = piece.getBoundingClientRect();
+  const trayPitch = pitch(piece.children[0], piece.children[1] ?? piece.children[0]) || pieceRect.width;
+  const boardPitch = pitch(cellEls[0][0], cellEls[0][1]);
+  const scale = boardPitch / trayPitch;
+
+  const ghost = shapeEl(shape, 'ghost');
+  document.body.appendChild(ghost);
+  piece.classList.add('dragging-source');
+
+  drag = {
+    index,
+    shape,
+    piece,
+    ghost,
+    boardPitch,
+    // 누른 지점을 판 크기로 늘린 위치. 터치는 손가락에 가리지 않게 위로 올린다.
+    offsetX: (e.clientX - pieceRect.left) * scale,
+    offsetY: (e.clientY - pieceRect.top) * scale + (e.pointerType === 'touch' ? boardPitch * 2 : 0),
+    target: null,
+  };
+  moveDrag(e);
+}
+
+function clearPreview() {
+  for (const line of cellEls) for (const el of line) el.classList.remove('preview');
+}
+
+function moveDrag(e) {
+  if (!drag) return;
+  const x = e.clientX - drag.offsetX;
+  const y = e.clientY - drag.offsetY;
+  drag.ghost.style.transform = `translate(${x}px, ${y}px)`;
+
+  const origin = cellEls[0][0].getBoundingClientRect();
+  const row = Math.round((y - origin.top) / drag.boardPitch);
+  const col = Math.round((x - origin.left) / drag.boardPitch);
+  clearPreview();
+  if (canPlace(state.board, drag.shape, row, col)) {
+    drag.target = { row, col };
+    for (const [dr, dc] of drag.shape.cells) cellEls[row + dr][col + dc].classList.add('preview');
+  } else {
+    drag.target = null;
+  }
+}
+
+function endDrag() {
+  if (!drag) return;
+  const { index, target, ghost, piece } = drag;
+  drag = null;
+  ghost.remove();
+  piece.classList.remove('dragging-source');
+  clearPreview();
+  if (!target) return;
+  const next = playPiece(state, index, target.row, target.col);
+  if (next) {
+    state = next;
+    render();
+  }
+}
+
+window.addEventListener('pointermove', moveDrag);
+window.addEventListener('pointerup', endDrag);
+window.addEventListener('pointercancel', endDrag);
+
+$('start-button').addEventListener('click', startGame);

@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+  <title>블록 퍼즐</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <section id="start-screen" class="screen">
+    <h1>블록 퍼즐</h1>
+    <button id="start-button" type="button">시작</button>
+  </section>
+
+  <section id="play-screen" class="screen" hidden>
+    <header class="hud">
+      <div>점수 <strong id="score">0</strong></div>
+    </header>
+    <div id="board" class="board"></div>
+    <div id="tray" class="tray"></div>
+  </section>
+
+  <script type="module" src="ui.js"></script>
+</body>
+</html>
