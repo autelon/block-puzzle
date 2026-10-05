@@ -136,3 +136,6 @@ button {
 .dialog-box p { margin: 0 0 8px; font-size: 20px; }
 button.secondary { background: var(--empty); color: var(--text); }
 button.icon { padding: 6px 14px; font-size: 18px; }
+.best { margin: 0; font-size: 18px; opacity: 0.8; }
+.new-best { color: var(--filled); font-weight: 700; }
+.new-best[hidden] { display: none; }

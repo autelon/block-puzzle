@@ -1,5 +1,6 @@
 // 화면 코드. 게임 규칙은 game.js 에 있고, 여기서는 상태를 그리고 입력을 game.js 함수로 넘긴다.
 import { SIZE, newGame, playPiece, canPlace } from './game.js';
+import { loadBest, recordFinished } from './best-score.js';
 
 const $ = (id) => document.getElementById(id);
 const startScreen = $('start-screen');
@@ -26,6 +27,7 @@ for (let r = 0; r < SIZE; r++) {
 
 function showScreen(screen) {
   for (const s of [startScreen, playScreen]) s.hidden = s !== screen;
+  if (screen === startScreen) $('start-best').textContent = loadBest();
 }
 
 function startGame() {
@@ -55,7 +57,10 @@ function pause() {
   pauseDialog.hidden = false;
 }
 
+// 끝까지 한 판만 최고 점수에 기록한다.
 function showOver() {
+  $('new-best').hidden = !recordFinished(state.score);
+  $('over-best').textContent = loadBest();
   $('final-score').textContent = state.score;
   overDialog.hidden = false;
 }
@@ -190,6 +195,7 @@ window.addEventListener('pointerup', (e) => endDrag(e, true));
 window.addEventListener('pointercancel', (e) => endDrag(e, false));
 
 $('start-button').addEventListener('click', startGame);
+showScreen(startScreen);
 $('pause-button').addEventListener('click', pause);
 $('pause-resume').addEventListener('click', () => { pauseDialog.hidden = true; });
 $('pause-restart').addEventListener('click', startGame);
