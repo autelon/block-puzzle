@@ -1,0 +1,30 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  # 머지 큐가 최신 main 과 합친 임시 브랜치에서 필수 검사를 다시 돌린다. 이 트리거가 없으면 큐가 결과를 기다리다 실패한다.
+  merge_group:
+
+permissions:
+  contents: read
+
+jobs:
+  # 이 job 이름(check)과 git-policy / merge-commits 가 main 병합의 필수 검사다. 이름을 바꾸면 main ruleset 도 같이 바꾼다.
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      # 빌드가 없는 HTML+JS 라 JS 문법 검사만 한다. JS 파일이 없으면 통과한다.
+      - name: JS 문법 검사
+        run: |
+          status=0
+          while IFS= read -r -d '' f; do
+            echo "node --check $f"
+            node --check "$f" || status=1
+          done < <(find . -path ./.git -prune -o -type f \( -name '*.js' -o -name '*.mjs' \) -print0)
+          exit $status
+  # autelon 조직 공통 규칙: PR 에 merge 커밋이 있으면 실패한다 (작업 브랜치는 rebase 로만 최신화).
+  git-policy:
+    uses: autelon/.github/.github/workflows/git-policy.yml@main
