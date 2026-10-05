@@ -9,6 +9,7 @@
 <body>
   <section id="start-screen" class="screen">
     <h1>블록 퍼즐</h1>
+    <p class="best">최고 점수 <strong id="start-best">0</strong></p>
     <button id="start-button" type="button">시작</button>
   </section>
 
@@ -33,6 +34,8 @@
       <div class="dialog-box">
         <h2>끝</h2>
         <p>최종 점수 <strong id="final-score">0</strong></p>
+        <p id="new-best" class="new-best" hidden>최고 점수!</p>
+        <p class="best">최고 점수 <strong id="over-best">0</strong></p>
         <button id="over-restart" type="button">재시작</button>
         <button id="over-quit" type="button" class="secondary">종료</button>
       </div>
