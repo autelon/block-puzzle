@@ -8,6 +8,7 @@ const boardEl = $('board');
 const trayEl = $('tray');
 const scoreEl = $('score');
 const overDialog = $('over-dialog');
+const pauseDialog = $('pause-dialog');
 
 let state = null;
 
@@ -29,15 +30,26 @@ function showScreen(screen) {
 
 function startGame() {
   state = newGame();
-  overDialog.hidden = true;
+  closeDialogs();
   showScreen(playScreen);
   render();
 }
 
 function quitGame() {
   state = null;
-  overDialog.hidden = true;
+  closeDialogs();
   showScreen(startScreen);
+}
+
+function closeDialogs() {
+  overDialog.hidden = true;
+  pauseDialog.hidden = true;
+}
+
+// 일시 중지에서 재시작·종료하면 그 판은 끝나지 않은 채 버려진다(점수 기록 대상이 아님).
+function pause() {
+  if (!state || state.over) return;
+  pauseDialog.hidden = false;
 }
 
 function showOver() {
@@ -167,5 +179,9 @@ window.addEventListener('pointerup', (e) => endDrag(e, true));
 window.addEventListener('pointercancel', (e) => endDrag(e, false));
 
 $('start-button').addEventListener('click', startGame);
+$('pause-button').addEventListener('click', pause);
+$('pause-resume').addEventListener('click', () => { pauseDialog.hidden = true; });
+$('pause-restart').addEventListener('click', startGame);
+$('pause-quit').addEventListener('click', quitGame);
 $('over-restart').addEventListener('click', startGame);
 $('over-quit').addEventListener('click', quitGame);

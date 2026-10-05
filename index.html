@@ -15,9 +15,19 @@
   <section id="play-screen" class="screen" hidden>
     <header class="hud">
       <div>점수 <strong id="score">0</strong></div>
+      <button id="pause-button" type="button" class="icon" aria-label="일시 중지">Ⅱ</button>
     </header>
     <div id="board" class="board"></div>
     <div id="tray" class="tray"></div>
+
+    <div id="pause-dialog" class="dialog" hidden>
+      <div class="dialog-box">
+        <h2>일시 중지</h2>
+        <button id="pause-resume" type="button">계속하기</button>
+        <button id="pause-restart" type="button" class="secondary">재시작</button>
+        <button id="pause-quit" type="button" class="secondary">종료</button>
+      </div>
+    </div>
 
     <div id="over-dialog" class="dialog" hidden>
       <div class="dialog-box">

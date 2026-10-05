@@ -135,3 +135,4 @@ button {
 .dialog-box h2 { margin: 0; font-size: 32px; }
 .dialog-box p { margin: 0 0 8px; font-size: 20px; }
 button.secondary { background: var(--empty); color: var(--text); }
+button.icon { padding: 6px 14px; font-size: 18px; }
