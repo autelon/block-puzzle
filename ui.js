@@ -7,6 +7,7 @@ const playScreen = $('play-screen');
 const boardEl = $('board');
 const trayEl = $('tray');
 const scoreEl = $('score');
+const overDialog = $('over-dialog');
 
 let state = null;
 
@@ -28,8 +29,20 @@ function showScreen(screen) {
 
 function startGame() {
   state = newGame();
+  overDialog.hidden = true;
   showScreen(playScreen);
   render();
+}
+
+function quitGame() {
+  state = null;
+  overDialog.hidden = true;
+  showScreen(startScreen);
+}
+
+function showOver() {
+  $('final-score').textContent = state.score;
+  overDialog.hidden = false;
 }
 
 // 모양을 칸 격자로 만든다. 빈 자리는 blank 칸으로 채운다.
@@ -145,6 +158,7 @@ function endDrag(e, drop) {
   if (next) {
     state = next;
     render();
+    if (state.over) showOver();
   }
 }
 
@@ -153,3 +167,5 @@ window.addEventListener('pointerup', (e) => endDrag(e, true));
 window.addEventListener('pointercancel', (e) => endDrag(e, false));
 
 $('start-button').addEventListener('click', startGame);
+$('over-restart').addEventListener('click', startGame);
+$('over-quit').addEventListener('click', quitGame);
