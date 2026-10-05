@@ -81,11 +81,13 @@ function pitch(a, b) {
 }
 
 function startDrag(e, index, piece) {
-  if (!state || state.over || drag) return;
+  // 끌기는 한 번에 하나, 마우스는 왼쪽 버튼만.
+  if (!state || state.over || drag || e.button !== 0) return;
   e.preventDefault();
   const shape = state.pieces[index];
   const pieceRect = piece.getBoundingClientRect();
-  const trayPitch = pitch(piece.children[0], piece.children[1] ?? piece.children[0]) || pieceRect.width;
+  // 받침 칸 간격(칸 크기 + gap). 한 칸 폭 블록도 맞게 칸 너비와 gap 으로 구한다.
+  const trayPitch = piece.children[0].getBoundingClientRect().width + parseFloat(getComputedStyle(piece).columnGap);
   const boardPitch = pitch(cellEls[0][0], cellEls[0][1]);
   const scale = boardPitch / trayPitch;
 
@@ -94,6 +96,7 @@ function startDrag(e, index, piece) {
   piece.classList.add('dragging-source');
 
   drag = {
+    pointerId: e.pointerId,
     index,
     shape,
     piece,
@@ -112,7 +115,7 @@ function clearPreview() {
 }
 
 function moveDrag(e) {
-  if (!drag) return;
+  if (!drag || e.pointerId !== drag.pointerId) return;
   const x = e.clientX - drag.offsetX;
   const y = e.clientY - drag.offsetY;
   drag.ghost.style.transform = `translate(${x}px, ${y}px)`;
@@ -129,14 +132,15 @@ function moveDrag(e) {
   }
 }
 
-function endDrag() {
-  if (!drag) return;
+// drop 이 false 면(pointercancel) 놓지 않고 되돌리기만 한다.
+function endDrag(e, drop) {
+  if (!drag || e.pointerId !== drag.pointerId) return;
   const { index, target, ghost, piece } = drag;
   drag = null;
   ghost.remove();
   piece.classList.remove('dragging-source');
   clearPreview();
-  if (!target) return;
+  if (!drop || !target) return;
   const next = playPiece(state, index, target.row, target.col);
   if (next) {
     state = next;
@@ -145,7 +149,7 @@ function endDrag() {
 }
 
 window.addEventListener('pointermove', moveDrag);
-window.addEventListener('pointerup', endDrag);
-window.addEventListener('pointercancel', endDrag);
+window.addEventListener('pointerup', (e) => endDrag(e, true));
+window.addEventListener('pointercancel', (e) => endDrag(e, false));
 
 $('start-button').addEventListener('click', startGame);
